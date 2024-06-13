@@ -1,0 +1,16 @@
+name: niryo
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10.10
+  - jupyter=1.0.0
+  - py-opencv=4.7.0
+  - pip=23.1.2
+  - pip:
+    - tensorflow==2.11.1
+    - pyniryo==1.1.2
+    - pyniryo2
+    - pygame==2.3.0
+    - pygame-menu==4.4.2
+ 
