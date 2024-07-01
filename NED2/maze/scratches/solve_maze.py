@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 # Load the uploaded image
-image_path = 'img/maze-1.png'
+image_path = '../img/real/maze1.png'
 
 # Step 1: Load and preprocess the image
 def preprocess_image(image_path):
