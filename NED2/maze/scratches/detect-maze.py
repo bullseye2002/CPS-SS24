@@ -1,5 +1,5 @@
 # Load the image
-image_path = '../img/real/maze1.png'
+image_path = '../../img/real/maze1.png'
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
