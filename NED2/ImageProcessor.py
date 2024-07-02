@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from skimage.morphology import skeletonize
 
 from NED2.exception.CircleDetectionError import CircleDetectionError
 
@@ -92,3 +93,17 @@ class ImageProcessor:
                     else:
                         arr_copy[i][j] = 0
         return arr_copy
+
+    def simplify_maze(self, maze):
+        maze = maze.astype(bool)
+
+        # Perform skeletonization
+        skeleton = skeletonize(maze)
+
+        # Remove zero rows
+        arr = skeleton[~np.all(skeleton == 0, axis=1)]
+
+        # Remove zero columns
+        arr = arr[:, ~np.all(arr == 0, axis=0)]
+
+        return arr
