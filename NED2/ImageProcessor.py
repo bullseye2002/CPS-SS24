@@ -1,13 +1,18 @@
+import array
+from typing import Any
+
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
 from matplotlib import pyplot as plt
+
 from NED2.exception.CircleDetectionError import CircleDetectionError
 
 
 class ImageProcessor:
 
-    def get_field_of_interest(self, image, blur=False, padding=-10):
+    @staticmethod
+    def get_field_of_interest(image: Any, blur: bool = False, padding: int = -10):
         # Convert to grayscale
         current_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -47,7 +52,8 @@ class ImageProcessor:
         cropped_image = image[y_min - padding:y_max + padding, x_min - padding:x_max + padding]
         return cropped_image
 
-    def dilation_erosion(self, image):
+    @staticmethod
+    def dilation_erosion(image: Any) -> np.ndarray:
         # Threshold the image to binary
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -69,7 +75,8 @@ class ImageProcessor:
 
         return erosion
 
-    def image_to_graph(self, binary_image):
+    @staticmethod
+    def image_to_graph(binary_image: np.ndarray) -> np.ndarray:
         h, w = binary_image.shape
         graph = np.zeros((h, w), dtype=np.uint8)
 
@@ -80,7 +87,8 @@ class ImageProcessor:
 
         return graph
 
-    def remove_white_noise(self, graph):
+    @staticmethod
+    def remove_white_noise(graph: np.ndarray) -> np.ndarray:
         # Create a copy of the array to avoid modifying the original array
         arr_copy = graph.copy()
         rows, cols = graph.shape
@@ -94,7 +102,8 @@ class ImageProcessor:
                         arr_copy[i][j] = 0
         return arr_copy
 
-    def simplify_maze(self, maze):
+    @staticmethod
+    def simplify_maze(maze: np.ndarray) -> np.ndarray:
         maze = maze.astype(bool)
 
         # Perform skeletonization
@@ -108,7 +117,8 @@ class ImageProcessor:
 
         return arr
 
-    def thicken_lines(self, image, thickness=3):
+    @staticmethod
+    def thicken_lines(image: np.ndarray, thickness: int = 3) -> np.ndarray:
         # Define the structuring element
         # In this case, we're using a 3x3 square which is the simplest structuring element
         kernel = np.ones((thickness, thickness), np.uint8)
@@ -128,7 +138,14 @@ class ImageProcessor:
 
         return thick_image
 
-    def distance_to_first_one_per_row(self, arr, inverse=False):
+    @staticmethod
+    def distance_to_first_one_per_row(arr: array, inverse: bool = False) -> array:
+        """
+        Calculate the distance to the first one per row
+        :param arr:
+        :param inverse: This is used for the right side of the maze
+        :return:
+        """
         distances = []
         for row in arr:
             if inverse:
@@ -149,8 +166,8 @@ class ImageProcessor:
 
         return distances
 
-
-    def plot_distance(self, average_distance, distances, max_length, max_start_index):
+    @staticmethod
+    def plot_distance(average_distance: int, distances: np.ndarray, max_length: int, max_start_index: int):
         fig, ax = plt.subplots()
         ax.plot(distances)
         # Plot the average distance
@@ -164,7 +181,7 @@ class ImageProcessor:
         # Display the plot
         plt.show()
 
-    def get_opening(self, distances, plot=False):
+    def get_opening_from_distance(self, distances: np.ndarray, plot: bool = False):
         # Calculate the average distance
         average_distance = np.mean(distances)
 
@@ -199,3 +216,14 @@ class ImageProcessor:
             self.plot_distance(average_distance, distances, max_length, max_start_index)
 
         return max_start_index, max_start_index + max_length
+
+    def get_opening(self, maze: np.ndarray, inverse: bool = False, plot: bool = False) -> tuple[int, int]:
+        distances_left = self.distance_to_first_one_per_row(maze, inverse)
+        return self.get_opening_from_distance(distances_left, plot)
+
+    def image_to_maze(self, cropped_image):
+        scaled_img = self.dilation_erosion(cropped_image)
+        graph = self.image_to_graph(scaled_img)
+        black_and_white = self.remove_white_noise(graph)
+        maze = self.simplify_maze(black_and_white)
+        return self.thicken_lines(maze, 5)
