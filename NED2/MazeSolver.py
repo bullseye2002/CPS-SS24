@@ -57,10 +57,9 @@ class MazeSolver:
             cv2.circle(maze_rgb, (position[1], position[0]), 1, (0, 0, 255), 0)
 
         # display the start and end points from self.start and self.end
-        cv2.circle(maze_rgb, (self.start[1], self.start[0]), 1, (0, 255, 0), 0)
-        cv2.circle(maze_rgb, (self.end[1], self.end[0]), 1, (0, 255, 0), 0)
+        cv2.circle(maze_rgb, self.start, 5, (255, 0, 0), -1)
+        cv2.circle(maze_rgb, (self.end[1], self.end[0]), 5, (255, 0, 255), -1)
 
-        # Display the maze with the solution path
         plt.subplot(1, 2, 2)  # 1 row, 2 columns, index 2
         plt.imshow(maze_rgb)
         plt.title('Solved Maze')
