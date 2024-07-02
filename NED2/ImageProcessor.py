@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
-
+from matplotlib import pyplot as plt
 from NED2.exception.CircleDetectionError import CircleDetectionError
 
 
@@ -107,3 +107,95 @@ class ImageProcessor:
         arr = arr[:, ~np.all(arr == 0, axis=0)]
 
         return arr
+
+    def thicken_lines(self, image, thickness=3):
+        # Define the structuring element
+        # In this case, we're using a 3x3 square which is the simplest structuring element
+        kernel = np.ones((thickness, thickness), np.uint8)
+
+        import cv2
+
+        # Check if the image array is empty or not
+        if image.size == 0:
+            print("The input image is empty.")
+            return image
+
+        # Convert the image to uint8 type
+        image = image.astype(np.uint8)
+
+        # Use cv2.dilate to thicken the lines in the image
+        thick_image = cv2.dilate(image, kernel, iterations=1)
+
+        return thick_image
+
+    def distance_to_first_one_per_row(self, arr, inverse=False):
+        distances = []
+        for row in arr:
+            if inverse:
+                row = np.flip(row)  # Reverse the row
+            indices = np.where(row == 1)
+            if indices[0].size > 0:
+                distance = indices[0][0]
+            else:
+                distance = -1  # Return -1 if no 1 is found in the row
+            distances.append(distance)
+
+        average_distance = np.mean(distances)
+        while distances and distances[0] > average_distance:
+            distances[0] = 0
+
+        while distances and distances[-1] > average_distance:
+            distances[-1] = 0
+
+        return distances
+
+
+    def plot_distance(self, average_distance, distances, max_length, max_start_index):
+        fig, ax = plt.subplots()
+        ax.plot(distances)
+        # Plot the average distance
+        ax.axhline(y=average_distance, color='r', linestyle='--')
+        # Mark the longest sequence of values above the average
+        ax.axvspan(max_start_index, max_start_index + max_length, color='yellow', alpha=0.5)
+        # Set the title and labels
+        ax.set_title('Distance to First One Per Row with Average')
+        ax.set_xlabel('Row')
+        ax.set_ylabel('Distance')
+        # Display the plot
+        plt.show()
+
+    def get_opening(self, distances, plot=False):
+        # Calculate the average distance
+        average_distance = np.mean(distances)
+
+        # Initialize variables
+        current_length = 0
+        max_value = 0
+        current_value = 0
+        max_length = 0
+        max_start_index = 0
+
+        # Iterate over the distances
+        for i, distance in enumerate(distances):
+            if distance > average_distance:
+                # If the distance is above the average, increment the current sequence length
+                current_length += 1
+                current_value += distance
+            else:
+                # If the distance is below the average or it's the last value, check the current sequence length
+                if current_value > max_value:
+                    max_value = current_value
+                    max_length = current_length
+                    max_start_index = i - max_length
+                current_length = 0
+                current_value = 0
+
+        # Check the last sequence
+        if current_length > max_length:
+            max_length = current_length
+            max_start_index = len(distances) - max_length
+
+        if plot:
+            self.plot_distance(average_distance, distances, max_length, max_start_index)
+
+        return max_start_index, max_start_index + max_length
