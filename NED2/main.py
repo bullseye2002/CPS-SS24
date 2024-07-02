@@ -241,18 +241,20 @@ import matplotlib
 #     plt.pause(0.5)
 
 
+from collections import deque
+
 def solve_maze(maze, start, end):
     # Directions for up, down, left, right
     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
-    # Stack for DFS
-    stack = [(start, [start])]
+    # Queue for BFS
+    queue = deque([(start, [start])])
 
     # Set for visited nodes
     visited = set()
 
-    while stack:
-        (x, y), path = stack.pop()
+    while queue:
+        (x, y), path = queue.popleft()
         if (x, y) not in visited:
             if (x, y) == end:
                 return path
@@ -260,7 +262,7 @@ def solve_maze(maze, start, end):
             for dx, dy in directions:
                 nx, ny = x + dx, y + dy
                 if (0 <= nx < len(maze)) and (0 <= ny < len(maze[0])) and maze[nx][ny] != 1:
-                    stack.append(((nx, ny), path + [(nx, ny)]))
+                    queue.append(((nx, ny), path + [(nx, ny)]))
     return None  # No path found
 path = solve_maze(maze, start, end)
 print(path)
