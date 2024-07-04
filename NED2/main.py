@@ -38,27 +38,43 @@ path_scaled = processor.revert_simplify(new_maze)
 maze_rgb_bak = cv2.cvtColor(maze_solver.maze * 255, cv2.COLOR_GRAY2RGB)
 maze_rgb = maze_rgb_bak.copy()
 maze_rgb = 255 - maze_rgb
-plt.subplot(1, 2, 1)  # 1 row, 2 columns, index 1
+
+
+plt.figure(figsize=(10, 10))  # You can adjust the figure size as needed
+
+plt.subplot(2, 2, 1)  # 2 rows, 2 columns, index 1
 plt.imshow(maze_rgb)
 plt.title('Original Maze')
+
 for position in maze_solver.path:
     cv2.circle(maze_rgb, (position[1], position[0]), 1, (0, 0, 255), 0)
 
-# display the start and end points from self.start and self.end
 cv2.circle(maze_rgb, maze_solver.start, 5, (255, 0, 0), -1)
 cv2.circle(maze_rgb, (maze_solver.end[1], maze_solver.end[0]), 5, (255, 0, 255), -1)
 
-plt.subplot(1, 2, 2)  # 1 row, 2 columns, index 2
+plt.subplot(2, 2, 2)  # 2 rows, 2 columns, index 2
 plt.imshow(maze_rgb)
 plt.title('Solved Maze')
 
-plt.subplot(2, 2, 1)  # 1 row, 2 columns, index 2
-maze_rgb = processor.revert_simplify(maze_solver.maze)
-plt.imshow(maze_rgb)
+plt.subplot(2, 2, 3)  # 2 rows, 2 columns, index 3
+scaled_maze = processor.revert_simplify(maze_solver.maze)
+plt.imshow(scaled_maze)
 plt.title('Scaled Maze')
 
-plt.subplot(2, 2, 2)  # 1 row, 2 columns, index 2
+plt.subplot(2, 2, 4)  # 2 rows, 2 columns, index 4
 plt.imshow(path_scaled)
 plt.title('Scaled Maze')
 
+plt.tight_layout()  # This will ensure that the subplots do not overlap
+plt.show()
+
+
+plt.figure(figsize=(10, 10))  # You can adjust the figure size as needed
+
+plt.subplot(2, 2, 1)  # 2 rows, 2 columns, index 1
+plt.imshow(scaled_maze, cmap='gray')
+plt.imshow(path_scaled, cmap='hot', alpha=0.5)  # Overlay path_scaled on top of scaled_maze
+plt.title('Scaled Maze with Path Overlay')
+
+plt.tight_layout()  # This will ensure that the subplots do not overlap
 plt.show()
