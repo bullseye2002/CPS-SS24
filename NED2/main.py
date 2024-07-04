@@ -69,11 +69,10 @@ plt.tight_layout()  # This will ensure that the subplots do not overlap
 plt.show()
 
 
-plt.figure(figsize=(10, 10))  # You can adjust the figure size as needed
+plt.figure(figsize=(20, 20))  # Set the figure size to a large value
 
-plt.subplot(2, 2, 1)  # 2 rows, 2 columns, index 1
 plt.imshow(scaled_maze, cmap='gray')
-plt.imshow(path_scaled, cmap='hot', alpha=0.5)  # Overlay path_scaled on top of scaled_maze
+plt.imshow(path_scaled, cmap='hot', alpha=0.9)  # Overlay path_scaled on top of scaled_maze
 plt.title('Scaled Maze with Path Overlay')
 
 plt.tight_layout()  # This will ensure that the subplots do not overlap
