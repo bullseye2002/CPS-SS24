@@ -1,8 +1,9 @@
 import array
-from typing import Any
+from typing import Any, Tuple
 
 import cv2
 import numpy as np
+from numpy import ndarray, dtype
 from skimage.morphology import skeletonize
 from matplotlib import pyplot as plt
 
@@ -10,6 +11,16 @@ from NED2.exception.CircleDetectionError import CircleDetectionError
 
 
 class ImageProcessor:
+
+    def __init__(self):
+        self.zero_cols_index = None
+        self.zero_rows_index = None
+        self.zero_cols = None
+        self.zero_rows = None
+        self.erosion_removed = None
+        self.columns_idx = None
+        self.rows_removed = None
+        self.rows_idx = None
 
     @staticmethod
     def get_field_of_interest(image: Any, blur: bool = False, padding: int = -10):
@@ -52,8 +63,7 @@ class ImageProcessor:
         cropped_image = image[y_min - padding:y_max + padding, x_min - padding:x_max + padding]
         return cropped_image
 
-    @staticmethod
-    def dilation_erosion(image: Any) -> np.ndarray:
+    def dilation_erosion(self, image: Any) -> ndarray:
         # Threshold the image to binary
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -66,14 +76,21 @@ class ImageProcessor:
         dilation = cv2.dilate(binary, kernel, iterations=3)
         erosion = cv2.erode(dilation, kernel, iterations=3)
 
-        erosion = erosion[np.any(erosion, axis=1)]
+        rows_kept = self.remove_zero_rows(erosion)
+        columns_kept = self.remove_zero_columns(rows_kept)
 
-        idx = np.argwhere(np.all(erosion[..., :] == 0, axis=0))
-        erosion = np.delete(erosion, idx, axis=1)
+        return columns_kept
 
-        # Apply the masks to the erosion array
+    def remove_zero_rows(self, erosion) -> ndarray:
+        self.rows_idx = np.argwhere(np.all(erosion == 0, axis=1))
+        self.rows_removed = erosion[self.rows_idx, ...]
+        return np.delete(erosion, self.rows_idx, axis=0)
 
-        return erosion
+    def remove_zero_columns(self, erosion) -> ndarray:
+        self.columns_idx = np.argwhere(np.all(erosion[..., :] == 0, axis=0))
+        # remove the all-zero columns
+        self.erosion_removed = erosion[..., self.columns_idx]
+        return np.delete(erosion, self.columns_idx, axis=1)
 
     @staticmethod
     def image_to_graph(binary_image: np.ndarray) -> np.ndarray:
@@ -102,18 +119,31 @@ class ImageProcessor:
                         arr_copy[i][j] = 0
         return arr_copy
 
-    @staticmethod
-    def simplify_maze(maze: np.ndarray) -> np.ndarray:
+    def simplify_maze(self, maze: np.ndarray) -> np.ndarray:
         maze = maze.astype(bool)
 
         # Perform skeletonization
         skeleton = skeletonize(maze)
 
-        # Remove zero rows
-        arr = skeleton[~np.all(skeleton == 0, axis=1)]
+        # Store the indices of all-zero rows
+        self.zero_rows_index = np.where(np.all(skeleton == 0, axis=1))[0]
+        self.zero_rows = skeleton[self.zero_rows_index]
+        arr = np.delete(skeleton, self.zero_rows_index, axis=0)
 
-        # Remove zero columns
-        arr = arr[:, ~np.all(arr == 0, axis=0)]
+        # Store the indices of all-zero columns
+        self.zero_cols_index = np.where(np.all(arr == 0, axis=0))[0]
+        self.zero_cols = arr[:, self.zero_cols_index]
+        arr = np.delete(arr, self.zero_cols_index, axis=1)
+
+        return arr
+
+    def revert_simplify(self, arr: np.ndarray) -> np.ndarray:
+
+        for i, index in enumerate(self.zero_cols_index):
+            arr = np.insert(arr, index, self.zero_cols[:, i], axis=1)
+
+        for i, index in enumerate(self.zero_rows_index):
+            arr = np.insert(arr, index, self.zero_rows[i], axis=0)
 
         return arr
 
@@ -226,4 +256,11 @@ class ImageProcessor:
         graph = self.image_to_graph(scaled_img)
         black_and_white = self.remove_white_noise(graph)
         maze = self.simplify_maze(black_and_white)
+
+        print(scaled_img.shape, graph.shape, black_and_white.shape, maze.shape)
+
+        # visualize the image
+        plt.imshow(maze, cmap='gray')
+        plt.show()
+
         return self.thicken_lines(maze, 5)
