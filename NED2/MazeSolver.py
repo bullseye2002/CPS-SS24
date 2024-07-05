@@ -1,6 +1,4 @@
 from collections import deque
-from matplotlib import pyplot as plt
-import cv2
 
 
 class MazeSolver:
@@ -9,17 +7,17 @@ class MazeSolver:
         self.maze = maze
         self.h, self.w = maze.shape
         self.path = []
-        self.start = self.getStart(start)
-        self.end = self.getEnd(end)
+        self.start = self.__get_start(start)
+        self.end = self.__get_end(end)
 
-    def average(self, num1, num2):
+    @staticmethod
+    def average(num1, num2):
         return round((num1 + num2) / 2)
 
-    def getStart(self, start):
+    def __get_start(self, start):
         return 0, self.average(start[0], start[1])
 
-    def getEnd(self, end):
-
+    def __get_end(self, end):
         return self.average(end[0], end[1]), self.w - 1
 
     def solve_maze(self):
@@ -45,22 +43,5 @@ class MazeSolver:
                         queue.append(((nx, ny), path + [(nx, ny)]))
         return None  # No path found
 
-    def visualize_path(self):
-        # plot image
-        maze_rgb_bak = cv2.cvtColor(self.maze * 255, cv2.COLOR_GRAY2RGB)
-        maze_rgb = maze_rgb_bak.copy()
-        maze_rgb = 255 - maze_rgb
-        plt.subplot(1, 2, 1)  # 1 row, 2 columns, index 1
-        plt.imshow(maze_rgb)
-        plt.title('Original Maze')
-        for position in self.path:
-            cv2.circle(maze_rgb, (position[1], position[0]), 1, (0, 0, 255), 0)
-
-        # display the start and end points from self.start and self.end
-        cv2.circle(maze_rgb, self.start, 5, (255, 0, 0), -1)
-        cv2.circle(maze_rgb, (self.end[1], self.end[0]), 5, (255, 0, 255), -1)
-
-        plt.subplot(1, 2, 2)  # 1 row, 2 columns, index 2
-        plt.imshow(maze_rgb)
-        plt.title('Solved Maze')
-        plt.show()
+    def get_path(self):
+        return self.path

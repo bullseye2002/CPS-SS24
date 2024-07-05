@@ -12,15 +12,8 @@ from NED2.exception.CircleDetectionError import CircleDetectionError
 
 class ImageProcessor:
 
-    def __init__(self):
-        self.zero_cols_index = None
-        self.zero_rows_index = None
-        self.zero_cols = None
-        self.zero_rows = None
-        self.erosion_removed = None
-        self.columns_idx = None
-        self.rows_removed = None
-        self.rows_idx = None
+    def __init__(self, plotter):
+        self.plotter = plotter
 
     @staticmethod
     def get_field_of_interest(image: Any, blur: bool = False, padding: int = -10):
@@ -76,21 +69,7 @@ class ImageProcessor:
         dilation = cv2.dilate(binary, kernel, iterations=3)
         erosion = cv2.erode(dilation, kernel, iterations=3)
 
-        rows_kept = self.remove_zero_rows(erosion)
-        columns_kept = self.remove_zero_columns(rows_kept)
-
-        return columns_kept
-
-    def remove_zero_rows(self, erosion) -> ndarray:
-        self.rows_idx = np.argwhere(np.all(erosion == 0, axis=1))
-        self.rows_removed = erosion[self.rows_idx, ...]
-        return np.delete(erosion, self.rows_idx, axis=0)
-
-    def remove_zero_columns(self, erosion) -> ndarray:
-        self.columns_idx = np.argwhere(np.all(erosion[..., :] == 0, axis=0))
-        # remove the all-zero columns
-        self.erosion_removed = erosion[..., self.columns_idx]
-        return np.delete(erosion, self.columns_idx, axis=1)
+        return erosion
 
     @staticmethod
     def image_to_graph(binary_image: np.ndarray) -> np.ndarray:
@@ -119,33 +98,9 @@ class ImageProcessor:
                         arr_copy[i][j] = 0
         return arr_copy
 
-    def simplify_maze(self, maze: np.ndarray) -> np.ndarray:
-        maze = maze.astype(bool)
-
-        # Perform skeletonization
-        skeleton = skeletonize(maze)
-
-        # Store the indices of all-zero rows
-        self.zero_rows_index = np.where(np.all(skeleton == 0, axis=1))[0]
-        self.zero_rows = skeleton[self.zero_rows_index]
-        arr = np.delete(skeleton, self.zero_rows_index, axis=0)
-
-        # Store the indices of all-zero columns
-        self.zero_cols_index = np.where(np.all(arr == 0, axis=0))[0]
-        self.zero_cols = arr[:, self.zero_cols_index]
-        arr = np.delete(arr, self.zero_cols_index, axis=1)
-
-        return arr
-
-    def revert_simplify(self, arr: np.ndarray) -> np.ndarray:
-
-        for i, index in enumerate(self.zero_cols_index):
-            arr = np.insert(arr, index, self.zero_cols[:, i], axis=1)
-
-        for i, index in enumerate(self.zero_rows_index):
-            arr = np.insert(arr, index, self.zero_rows[i], axis=0)
-
-        return arr
+    @staticmethod
+    def simplify_maze(maze: np.ndarray) -> np.ndarray:
+        return skeletonize(maze)
 
     @staticmethod
     def thicken_lines(image: np.ndarray, thickness: int = 3) -> np.ndarray:
@@ -164,9 +119,7 @@ class ImageProcessor:
         image = image.astype(np.uint8)
 
         # Use cv2.dilate to thicken the lines in the image
-        thick_image = cv2.dilate(image, kernel, iterations=1)
-
-        return thick_image
+        return cv2.dilate(image, kernel, iterations=1)
 
     @staticmethod
     def distance_to_first_one_per_row(arr: array, inverse: bool = False) -> array:
@@ -196,22 +149,7 @@ class ImageProcessor:
 
         return distances
 
-    @staticmethod
-    def plot_distance(average_distance: int, distances: np.ndarray, max_length: int, max_start_index: int):
-        fig, ax = plt.subplots()
-        ax.plot(distances)
-        # Plot the average distance
-        ax.axhline(y=average_distance, color='r', linestyle='--')
-        # Mark the longest sequence of values above the average
-        ax.axvspan(max_start_index, max_start_index + max_length, color='yellow', alpha=0.5)
-        # Set the title and labels
-        ax.set_title('Distance to First One Per Row with Average')
-        ax.set_xlabel('Row')
-        ax.set_ylabel('Distance')
-        # Display the plot
-        plt.show()
-
-    def get_opening_from_distance(self, distances: np.ndarray, plot: bool = False):
+    def get_opening_from_distance(self, distances: np.ndarray):
         # Calculate the average distance
         average_distance = np.mean(distances)
 
@@ -242,25 +180,18 @@ class ImageProcessor:
             max_length = current_length
             max_start_index = len(distances) - max_length
 
-        if plot:
-            self.plot_distance(average_distance, distances, max_length, max_start_index)
+        self.plotter.plot_openings(average_distance, distances, max_length, max_start_index)
 
         return max_start_index, max_start_index + max_length
 
-    def get_opening(self, maze: np.ndarray, inverse: bool = False, plot: bool = False) -> tuple[int, int]:
+    def get_opening(self, maze: np.ndarray, inverse: bool = False) -> tuple[int, int]:
         distances_left = self.distance_to_first_one_per_row(maze, inverse)
-        return self.get_opening_from_distance(distances_left, plot)
+        return self.get_opening_from_distance(distances_left)
 
     def image_to_maze(self, cropped_image):
-        scaled_img = self.dilation_erosion(cropped_image)
-        graph = self.image_to_graph(scaled_img)
+        preprocessed_image = self.dilation_erosion(cropped_image)
+        graph = self.image_to_graph(preprocessed_image)
         black_and_white = self.remove_white_noise(graph)
         maze = self.simplify_maze(black_and_white)
-
-        print(scaled_img.shape, graph.shape, black_and_white.shape, maze.shape)
-
-        # visualize the image
-        plt.imshow(maze, cmap='gray')
-        plt.show()
 
         return self.thicken_lines(maze, 5)

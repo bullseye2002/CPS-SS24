@@ -7,7 +7,7 @@ from NED2.exception.CircleDetectionError import CircleDetectionError
 
 class TestImageProcessor(unittest.TestCase):
     def setUp(self):
-        self.processor = ImageProcessor()
+        self.processor = ImageProcessor(plotter)
         self.test_image = cv2.imread('img/test-maze.png')  # replace with your test image path
 
     def test_get_field_of_interest(self):
