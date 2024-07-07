@@ -27,3 +27,7 @@ scaled_maze = scaler.revert_scaling(maze)
 
 plotter.maze_solving_overview(maze, maze_solver.get_path(), scaled_maze, path_scaled, left_opening, right_opening)
 plotter.scaled_solution(scaled_maze, path_scaled)
+
+print(scaled_maze.shape)
+path_coordinates = [(i, j) for i in range(path_scaled.shape[0]) for j in range(path_scaled.shape[1]) if path_scaled[i][j] == 1]
+print(path_coordinates)
