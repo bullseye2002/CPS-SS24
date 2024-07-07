@@ -60,7 +60,7 @@ class Plotter:
         plt.show()
 
     @staticmethod
-    def maze(maze):
+    def imshow(maze):
         # visualize the image
         plt.imshow(maze, cmap='gray')
         plt.show()

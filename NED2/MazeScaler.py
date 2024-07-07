@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class Scaler:
+class MazeScaler:
 
     def __init__(self):
         self.zero_cols = None
