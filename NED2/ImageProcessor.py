@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 from numpy import ndarray, dtype
 from skimage.morphology import skeletonize
-from matplotlib import pyplot as plt
 
 from NED2.exception.CircleDetectionError import CircleDetectionError
 

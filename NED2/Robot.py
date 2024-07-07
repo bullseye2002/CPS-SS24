@@ -1,5 +1,6 @@
 from pyniryo2 import *
 import pyniryo
+import logging
 
 
 class Robot:
@@ -13,6 +14,14 @@ class Robot:
             x=0.17, y=0., z=0.35,
             roll=0.0, pitch=1.57, yaw=0.0,
         )
+        self.__logger = logging.getLogger(__name__)
+        # Configure logging
+        logging.basicConfig(level=logging.INFO,
+                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                            handlers=[
+                                logging.FileHandler("robot_logs.log"),
+                                logging.StreamHandler()
+                            ])
         super().__init__()
 
     def connect(self):
@@ -25,6 +34,8 @@ class Robot:
         grid_dimension = (3, 3)  # conditioning grid dimension
         vision_process_on_robot = False  # boolean to indicate if the image processing happens on the Robot
         display_stream = True  # Only used if vision on computer
+
+        self.__logger.info(f"Connecting to robot at IP {robot_ip_address} in {'simulation' if self.__simulation_mode else 'wifi'} mode")
 
         self.__robot = NiryoRobot(robot_ip_address)
 
