@@ -1,17 +1,29 @@
 # startup roboter
+import time
 from NED2.Robot import Robot
 from NED2.Plotter import Plotter
 from NED2.ImageProcessor import ImageProcessor
 from NED2.MazeSolver import MazeSolver
 from NED2.MazeScaler import MazeScaler
 from NED2.RobotScaler import RobotScaler
+import logging
 
 
 def main():
-    robot = Robot(simulation=True)
+    logger = logging.getLogger(__name__)
+    # Configure logging
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                        handlers=[
+                            logging.FileHandler("robot_logs.log"),
+                            logging.StreamHandler()
+                        ])
+
+    robot = Robot(simulation=False)
     robot.connect()
 
     # bring into position
+    robot.move_to_home_pose()
     robot.move_to_observation_pose()
 
     # take image
@@ -24,15 +36,26 @@ def main():
     processor = ImageProcessor(plotter)
     scaler = MazeScaler()
 
-    cropped_image = processor.get_field_of_interest(image, padding=-10)
+    cropped_image = processor.get_field_of_interest(image, padding=-30)
+    time.sleep(1)
     maze = processor.image_to_maze(cropped_image)
+
+    plotter.imshow(maze, "image-to_maze")
+
     maze = scaler.scaled_down_maze(maze)
+    plotter.imshow(maze, "scaled_down")
 
     left_opening = processor.get_opening(maze)
     right_opening = processor.get_opening(maze, inverse=True)
 
+    plotter.maze_with_openings(maze, left_opening, right_opening)
+
     maze_solver = MazeSolver(maze, left_opening, right_opening)
     maze_solver.solve_maze()
+
+    plotter.maze_with_points(maze, maze_solver.visited, "Visited")
+    plotter.maze_with_openings(maze, left_opening, right_opening)
+    plotter.maze_with_points_and_lines(maze, maze_solver.get_path(), "Maze solved with purple?")
 
     empty_path_maze = scaler.generate_empty_maze_with_path(maze, maze_solver.get_path())
     path_scaled = scaler.revert_scaling(empty_path_maze)
@@ -42,15 +65,55 @@ def main():
     plotter.maze_solving_overview(maze, maze_solver.get_path(), scaled_maze, path_scaled, left_opening, right_opening)
     plotter.scaled_solution(scaled_maze, path_scaled)
 
+    import math
+
+    def euclidean_distance(point1, point2):
+        return math.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2)
+
+    def order_coordinates_by_path(coordinates):
+        if not coordinates:
+            return []
+
+        ordered_coordinates = [coordinates.pop(0)]  # Start with the first coordinate
+        while coordinates:
+            last_point = ordered_coordinates[-1]
+            nearest_point, nearest_point_index = min(
+                ((point, index) for index, point in enumerate(coordinates)),
+                key=lambda point_index: euclidean_distance(last_point, point_index[0])
+            )
+            ordered_coordinates.append(nearest_point)
+            coordinates.pop(nearest_point_index)  # Remove the nearest point from the list
+
+        return ordered_coordinates
+
+
+
+    scaled_coordinates = []
+    for x in range(len(path_scaled)):
+        for y in range(len(path_scaled[x])):
+            if path_scaled[x][y] == 1:
+                scaled_coordinates.append((x, y))
+
+    ordered_coordinates = order_coordinates_by_path(scaled_coordinates)
+    print(ordered_coordinates)
+
     # run path
     robot_scaler = RobotScaler()
-    waypoints = robot_scaler.get_unique_tuples(path_scaled)
-    mapped_waypoints = [robot_scaler.map_to_new_coordinate_system(waypoint) for waypoint in waypoints]
+    waypoints = robot_scaler.get_unique_tuples(ordered_coordinates)
+    mapped_waypoints = [robot_scaler.map_coordinates(scaled_maze.shape, waypoint) for waypoint in waypoints]
+
+    logger.info("waypoints")
+    logger.info(waypoints)
+    plotter.maze_with_points_and_lines(scaled_maze, waypoints)
 
     for waypoint in mapped_waypoints:
         robot.move_xy(waypoint[0], waypoint[1])
+        #time.sleep(1)
     # disconnect robot
-    robot.disconnect()
+    try:
+        robot.disconnect()
+    except Exception as e:
+        logger.info(e)
 
 
 if __name__ == '__main__':

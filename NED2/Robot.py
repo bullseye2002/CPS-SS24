@@ -11,8 +11,8 @@ class Robot:
         self.__wifi_mode = "192.168.0.140"
         self.__simulation_mode = simulation
         self.__observation_pose = PoseObject(
-            x=0.17, y=0., z=0.35,
-            roll=0.0, pitch=1.57, yaw=0.0,
+            x=0.21, y=0., z=0.2,
+            roll=0.0, pitch=2., yaw=0.0,
         )
         self.__logger = logging.getLogger(__name__)
         # Configure logging
@@ -52,9 +52,9 @@ class Robot:
     def move_pose(self, pose: PoseObject):
         self.__robot.arm.move_pose(pose)
 
-    def move_xy(self, x, y):
+    def move_xy(self, x, y, z=0.1):
         self.__robot.arm.move_pose(PoseObject(
-            x=x, y=y, z=0.1,
+            x=x, y=y, z=0.035,
             roll=-0.142, pitch=1.57, yaw=0.
         ))
 
@@ -68,6 +68,9 @@ class Robot:
         image = pyniryo.undistort_image(image, camera_info.intrinsics, camera_info.distortion)
 
         return image
+
+    def move_to_home_pose(self):
+        self.__robot.arm.move_to_home_pose()
 
     def disconnect(self):
         # Ending

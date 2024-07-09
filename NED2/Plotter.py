@@ -24,6 +24,21 @@ class Plotter:
         plt.tight_layout()  # This will ensure that the subplots do not overlap
         plt.show()
 
+    def maze_with_openings(self, maze, start, end):
+        maze_rgb = cv2.cvtColor(maze * 255, cv2.COLOR_GRAY2RGB)
+
+        if start is not None:
+            cv2.circle(maze_rgb, start, 5, self.red, -1)
+
+        if end is not None:
+            cv2.circle(maze_rgb, end, 5, self.red, -1)
+
+        plt.imshow(maze_rgb)
+        plt.title('Maze with start and end')
+        plt.show()
+
+        pass
+
     def maze_solving_overview(self, maze: ndarray, path, scaled_maze, scaled_path, start: Tuple = None,
                               end: Tuple = None) -> None:
         maze_rgb = cv2.cvtColor(maze * 255, cv2.COLOR_GRAY2RGB)
@@ -60,9 +75,10 @@ class Plotter:
         plt.show()
 
     @staticmethod
-    def imshow(maze):
+    def imshow(maze, title=""):
         # visualize the image
         plt.imshow(maze, cmap='gray')
+        plt.title(title)
         plt.show()
 
     @staticmethod
@@ -78,4 +94,38 @@ class Plotter:
         ax.set_xlabel('Row')
         ax.set_ylabel('Distance')
         # Display the plot
+        plt.show()
+
+    def maze_with_points(self, maze, points, title=""):
+        maze_copy = maze.copy()
+        maze_rgb = cv2.cvtColor(maze_copy * 255, cv2.COLOR_GRAY2RGB)
+        for position in points:
+            # Convert the coordinates to integers
+            x = int(position[0])
+            y = int(position[1])
+            cv2.circle(maze_rgb, (y, x), 1, self.red, -1)
+        plt.imshow(maze_rgb)
+        plt.title(title)
+        plt.show()
+
+    def maze_with_points_and_lines(self, maze, points, title=""):
+        maze_copy = maze.copy()
+        maze_rgb = cv2.cvtColor(maze_copy * 255, cv2.COLOR_GRAY2RGB)
+        last_position = None
+        for position in points:
+            # Convert the coordinates to integers
+            x = int(position[0])
+            y = int(position[1])
+            cv2.circle(maze_rgb, (y, x), 1, self.red, -1)
+
+            # Draw line from the last position to the current position in purple
+            if last_position is not None:
+                last_x = int(last_position[0])
+                last_y = int(last_position[1])
+                cv2.line(maze_rgb, (last_y, last_x), (y, x), (128, 0, 128), 1)  # Purple color in BGR
+
+            last_position = position
+
+        plt.imshow(maze_rgb)
+        plt.title(title)
         plt.show()

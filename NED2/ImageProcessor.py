@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from numpy import ndarray, dtype
 from skimage.morphology import skeletonize
+import matplotlib.pyplot as plt
 
 from NED2.exception.CircleDetectionError import CircleDetectionError
 
@@ -38,6 +39,9 @@ class ImageProcessor:
                     detected_circles.append((x, y, r))
                     cv2.circle(circle_image, (x, y), r, (0, 255, 0), 4)
                     cv2.rectangle(circle_image, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+
+        plt.imshow(circle_image)
+        plt.show()
 
         if len(detected_circles) != 4:
             raise CircleDetectionError(len(detected_circles))
@@ -185,7 +189,13 @@ class ImageProcessor:
 
     def get_opening(self, maze: np.ndarray, inverse: bool = False) -> tuple[int, int]:
         distances_left = self.distance_to_first_one_per_row(maze, inverse)
-        return self.get_opening_from_distance(distances_left)
+        y = 0
+        if inverse:
+            y = maze.shape[1]
+
+        opening = self.get_opening_from_distance(distances_left)
+
+        return int((opening[0] + opening[1]) / 2), y
 
     def image_to_maze(self, cropped_image):
         preprocessed_image = self.dilation_erosion(cropped_image)
