@@ -46,9 +46,12 @@ class Robot:
             # Equip tool
             self.__robot.tool.update_tool()
 
+    #TODO: Könnte man entfernen, wird nirgends verwendet
     def get_robot(self) -> NiryoRobot:
         return self.__robot
 
+    #TODO: wird nur von move_to_observation_pose aufgerufen
+    # Funktion kann gestrichen und in der gesagten Funktion übernommen werden
     def move_pose(self, pose: PoseObject):
         self.__robot.arm.move_pose(pose)
 

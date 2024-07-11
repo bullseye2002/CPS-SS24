@@ -2,7 +2,7 @@ from collections import deque
 
 
 class MazeSolver:
-
+#TODO: Vielleicht Mazesolver mit Mazescaler zusammen in eine Klasse Maze packen
     def __init__(self, maze, start, end):
         self.maze = maze
         self.h, self.w = maze.shape
