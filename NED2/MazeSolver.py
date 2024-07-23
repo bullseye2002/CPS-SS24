@@ -3,7 +3,7 @@ import logging
 
 
 class MazeSolver:
-
+#TODO: Vielleicht Mazesolver mit Mazescaler zusammen in eine Klasse Maze packen
     def __init__(self, maze, start, end):
         self.visited = None
         self.maze = maze

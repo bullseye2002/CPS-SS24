@@ -9,7 +9,10 @@ import matplotlib.pyplot as plt
 
 from NED2.exception.CircleDetectionError import CircleDetectionError
 
-
+#TODO:Könnte man nicht ImageProcessor, ImageLoader und Plotter in eine Klasse zusammenfassen?
+# Semantisch beschäftigen sie sich alle mit der Verarbeitung von Bilddaten
+# zudem importiert Imageprocessor sogar die Plotter-klasse
+# Man könnte auch noch MazeScaler hinzufügen
 class ImageProcessor:
 
     def __init__(self, plotter):
