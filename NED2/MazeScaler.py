@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 
 class MazeScaler:
@@ -40,3 +41,34 @@ class MazeScaler:
         downscaled_maze = np.delete(downscaled_maze, self.zero_cols_index, axis=1)
 
         return downscaled_maze
+
+    @staticmethod
+    def euclidean_distance(point1, point2):
+        return math.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
+
+    def order_coordinates_by_path(self, coordinates_input):
+        coordinates = coordinates_input.copy()
+        if not coordinates:
+            return []
+
+        ordered_coordinates = [coordinates.pop(0)]  # Start with the first coordinate
+        while coordinates:
+            last_point = ordered_coordinates[-1]
+            nearest_point, nearest_point_index = min(
+                ((point, index) for index, point in enumerate(coordinates)),
+                key=lambda point_index: self.euclidean_distance(last_point, point_index[0])
+            )
+            ordered_coordinates.append(nearest_point)
+            coordinates.pop(nearest_point_index)  # Remove the nearest point from the list
+
+        return ordered_coordinates
+
+    @staticmethod
+    def maze_to_coordinates(path_scaled: np.ndarray):
+        scaled_coordinates = []
+        for x in range(len(path_scaled)):
+            for y in range(len(path_scaled[x])):
+                if path_scaled[x][y] == 1:
+                    scaled_coordinates.append((x, y))
+
+        return scaled_coordinates

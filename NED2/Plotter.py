@@ -28,10 +28,10 @@ class Plotter:
         maze_rgb = cv2.cvtColor(maze * 255, cv2.COLOR_GRAY2RGB)
 
         if start is not None:
-            cv2.circle(maze_rgb, start, 5, self.red, -1)
+            cv2.circle(maze_rgb, (start[1], start[0]), 5, self.red, -1)
 
         if end is not None:
-            cv2.circle(maze_rgb, end, 5, self.red, -1)
+            cv2.circle(maze_rgb, (end[1], end[0]), 5, self.red, -1)
 
         plt.imshow(maze_rgb)
         plt.title('Maze with start and end')
@@ -75,10 +75,16 @@ class Plotter:
         plt.show()
 
     @staticmethod
-    def imshow(maze, title=""):
-        # visualize the image
+    def imshow(maze, title="", show_only_image=False):
+        fig, ax = plt.subplots()
+        if show_only_image:
+            plt.axis('off')  # Hide the axis
+            fig.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Remove the white space
+        else:
+            plt.title(title)
+            plt.axis('on')  # Show the axis
+
         plt.imshow(maze, cmap='gray')
-        plt.title(title)
         plt.show()
 
     @staticmethod
@@ -108,7 +114,7 @@ class Plotter:
         plt.title(title)
         plt.show()
 
-    def maze_with_points_and_lines(self, maze, points, title=""):
+    def maze_with_points_and_lines(self, maze, points, title="", show_only_image=False):
         maze_copy = maze.copy()
         maze_rgb = cv2.cvtColor(maze_copy * 255, cv2.COLOR_GRAY2RGB)
         last_position = None
@@ -116,16 +122,43 @@ class Plotter:
             # Convert the coordinates to integers
             x = int(position[0])
             y = int(position[1])
-            cv2.circle(maze_rgb, (y, x), 1, self.red, -1)
 
             # Draw line from the last position to the current position in purple
             if last_position is not None:
                 last_x = int(last_position[0])
                 last_y = int(last_position[1])
-                cv2.line(maze_rgb, (last_y, last_x), (y, x), (128, 0, 128), 1)  # Purple color in BGR
+                cv2.line(maze_rgb, (last_y, last_x), (y, x), (128, 0, 128), 2)  # Purple color in BGR
+
+            cv2.circle(maze_rgb, (y, x), 3, self.red, 0)
 
             last_position = position
 
-        plt.imshow(maze_rgb)
-        plt.title(title)
+        fig, ax = plt.subplots()
+
+        if show_only_image:
+            plt.axis('off')  # Hide the axis
+            fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        else:
+            plt.title(title)
+            plt.axis('on')  # Show the axis
+
+        plt.imshow(maze_rgb, cmap='gray')
         plt.show()
+
+
+    def draw_maze(self, maze):
+        if self.img is None:
+            self.img = self.ax.imshow(maze, cmap='gray')
+        else:
+            self.img.set_data(maze)
+        plt.draw()
+        plt.pause(0.001)  # Pause to allow the plot to update
+
+    def update_maze_with_path(self, maze, path):
+        maze_with_path = np.copy(maze)
+        for x, y in path:
+            maze_with_path[x, y] = 0.5  # Assuming 0.5 to represent the path visually
+        self.img.set_data(maze_with_path)
+        plt.draw()
+        plt.pause(0.001)  # Pause to allow the plot to update
+

@@ -3,7 +3,7 @@ from typing import Any, Tuple
 
 import cv2
 import numpy as np
-from numpy import ndarray, dtype
+from numpy import ndarray
 from skimage.morphology import skeletonize
 import matplotlib.pyplot as plt
 
@@ -15,10 +15,11 @@ class ImageProcessor:
     def __init__(self, plotter):
         self.plotter = plotter
 
-    @staticmethod
-    def get_field_of_interest(image: Any, blur: bool = False, padding: int = -10):
+    def get_field_of_interest(self, image: Any, blur: bool = False, padding: int = -10):
         # Convert to grayscale
         current_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        self.plotter.imshow(current_image, show_only_image=True, title="Grayscale Image")
 
         # Apply GaussianBlur to reduce noise and improve circle detection
         if blur:
@@ -40,8 +41,7 @@ class ImageProcessor:
                     cv2.circle(circle_image, (x, y), r, (0, 255, 0), 4)
                     cv2.rectangle(circle_image, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
 
-        plt.imshow(circle_image)
-        plt.show()
+        self.plotter.imshow(circle_image, show_only_image=True)
 
         if len(detected_circles) != 4:
             raise CircleDetectionError(len(detected_circles))
@@ -57,9 +57,11 @@ class ImageProcessor:
 
         # Crop the image using the bounding box coordinates and add padding
         cropped_image = image[y_min - padding:y_max + padding, x_min - padding:x_max + padding]
+        self.plotter.imshow(cropped_image, "Cropped Image", show_only_image=True)
         return cropped_image
 
-    def dilation_erosion(self, image: Any) -> ndarray:
+    @staticmethod
+    def dilation_erosion(image: Any) -> ndarray:
         # Threshold the image to binary
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -82,7 +84,7 @@ class ImageProcessor:
         for y in range(h):
             for x in range(w):
                 if binary_image[y, x] == 255:
-                    graph[y, x] = 1  # Mark the path
+                    graph[y, x] = 1  # Mark the walls
 
         return graph
 

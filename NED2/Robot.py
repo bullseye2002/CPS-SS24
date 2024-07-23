@@ -49,17 +49,17 @@ class Robot:
     def get_robot(self) -> NiryoRobot:
         return self.__robot
 
-    def move_pose(self, pose: PoseObject):
+    def __move_pose(self, pose: PoseObject):
         self.__robot.arm.move_pose(pose)
 
-    def move_xy(self, x, y, z=0.1):
+    def move_xy(self, x, y, z=0.035):
         self.__robot.arm.move_pose(PoseObject(
-            x=x, y=y, z=0.035,
+            x=x, y=y, z=z,
             roll=-0.142, pitch=1.57, yaw=0.
         ))
 
     def move_to_observation_pose(self):
-        self.move_pose(self.__observation_pose)
+        self.__move_pose(self.__observation_pose)
 
     def take_image(self):
         img_compressed = self.__robot.vision.get_img_compressed()
